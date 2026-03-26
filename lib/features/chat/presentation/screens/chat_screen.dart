@@ -106,7 +106,7 @@ class _ChatScreenState extends State<ChatScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          const Text('Just now', style: TextStyle(fontSize: 10, color: AppColors.mediumGray, fontWeight: FontWeight.w600)),
+          Text(_formatTime(latestMsg['created_at']), style: const TextStyle(fontSize: 10, color: AppColors.mediumGray, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           if (latestMsg['sender_id'] != _myId && latestMsg['is_read'] == false)
             const CircleAvatar(radius: 4, backgroundColor: AppColors.accentColor),
@@ -123,5 +123,19 @@ class _ChatScreenState extends State<ChatScreen> {
         ).then((_) => setState(() {})); // Refresh list after returning
       },
     );
+  }
+
+  String _formatTime(String? timestamp) {
+    if (timestamp == null) return '';
+    try {
+      final dt = DateTime.parse(timestamp);
+      final diff = DateTime.now().difference(dt);
+      if (diff.inMinutes < 1) return 'Just now';
+      if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+      if (diff.inHours < 24) return '${diff.inHours}h';
+      return '${diff.inDays}d';
+    } catch (_) {
+      return '';
+    }
   }
 }

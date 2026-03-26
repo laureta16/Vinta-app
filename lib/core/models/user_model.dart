@@ -20,4 +20,28 @@ class UserModel {
     this.reviewCount = 0,
     this.isVerified = false,
   });
+
+  UserModel copyWith({
+    String? id,
+    String? email,
+    String? username,
+    String? phoneNumber,
+    String? profileImageUrl,
+    String? bio,
+    double? rating,
+    int? reviewCount,
+    bool? isVerified,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      username: username ?? this.username,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      bio: bio ?? this.bio,
+      rating: rating ?? this.rating,
+      reviewCount: reviewCount ?? this.reviewCount,
+      isVerified: isVerified ?? this.isVerified,
+    );
+  }
 }

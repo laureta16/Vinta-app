@@ -6,6 +6,9 @@ import 'package:vinta/core/providers/clothing_provider.dart';
 import 'package:vinta/theme/app_colors.dart';
 import 'package:vinta/features/profile/presentation/screens/profile_detail_screen.dart';
 import 'package:vinta/features/chat/presentation/screens/chat_detail_screen.dart';
+import 'package:vinta/core/providers/auth_provider.dart';
+import 'package:vinta/features/post/presentation/screens/checkout_screen.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ClothingItemCard extends StatefulWidget {
   final ClothingItem item;
@@ -95,9 +98,14 @@ class _ClothingItemCardState extends State<ClothingItemCard> with SingleTickerPr
                   ),
                 ),
                 const Spacer(),
-                const Icon(Icons.verified_rounded, color: Colors.blue, size: 16),
-                const SizedBox(width: 12),
-                const Icon(Icons.more_horiz_rounded, color: AppColors.textSecondary),
+                if (widget.item.sellerVerified)
+                  const Icon(Icons.verified_rounded, color: Colors.blue, size: 16),
+                if (widget.item.sellerVerified)
+                  const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () => _showReportSheet(context),
+                  child: const Icon(Icons.more_horiz_rounded, color: AppColors.textSecondary),
+                ),
               ],
             ),
           ),
@@ -160,9 +168,20 @@ class _ClothingItemCardState extends State<ClothingItemCard> with SingleTickerPr
                     ));
                   },
                 ),
-                _buildActionIcon(icon: Icons.send_rounded),
+                _buildActionIcon(
+                  icon: Icons.send_rounded,
+                  onTap: () {
+                    Share.share('Check out ${widget.item.title} on Vinta! ${widget.item.price.toInt()} Lek');
+                  },
+                ),
                 const Spacer(),
-                _buildActionIcon(icon: Icons.bookmark_border_rounded),
+                _buildActionIcon(
+                  icon: widget.item.isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                  color: widget.item.isSaved ? AppColors.accentColor : null,
+                  onTap: () {
+                    provider.toggleSave(widget.item.id);
+                  },
+                ),
               ],
             ),
           ),
@@ -229,6 +248,62 @@ class _ClothingItemCardState extends State<ClothingItemCard> with SingleTickerPr
           const SizedBox(width: 4),
           Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
         ],
+      ),
+    );
+  }
+
+  void _showReportSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(width: 40, height: 4, decoration: BoxDecoration(
+              color: AppColors.mediumGray, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.flag_rounded, color: Colors.orange),
+              title: const Text('Report this listing', style: TextStyle(fontWeight: FontWeight.w700)),
+              onTap: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Report submitted. We\'ll review this listing.')),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.block_rounded, color: AppColors.error),
+              title: const Text('Block this seller', style: TextStyle(fontWeight: FontWeight.w700)),
+              onTap: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${widget.item.sellerName} has been blocked.')),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.shopping_bag_rounded, color: AppColors.accentColor),
+              title: const Text('Buy this item', style: TextStyle(fontWeight: FontWeight.w700)),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => CheckoutScreen(item: widget.item),
+                ));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.cancel_outlined, color: AppColors.textSecondary),
+              title: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () => Navigator.pop(ctx),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
       ),
     );
   }
@@ -335,10 +410,11 @@ class _CommentSheetState extends State<_CommentSheet> {
                 TextButton(
                   onPressed: () {
                     if (_commentController.text.isNotEmpty) {
+                      final auth = Provider.of<AuthProvider>(context, listen: false);
                       provider.addComment(widget.itemId, Comment(
                         id: DateTime.now().toString(),
-                        userId: 'u1',
-                        username: 'Me',
+                        userId: auth.user?.id ?? 'anon',
+                        username: auth.user?.username ?? 'You',
                         text: _commentController.text,
                         createdAt: DateTime.now(),
                       ));

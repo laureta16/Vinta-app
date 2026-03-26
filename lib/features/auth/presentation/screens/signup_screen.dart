@@ -21,6 +21,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final cooldownSeconds = authProvider.signupCooldownSecondsRemaining;
 
     return Scaffold(
       body: Stack(
@@ -39,7 +40,7 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ),
           ),
-          
+
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
@@ -53,54 +54,77 @@ class _SignupScreenState extends State<SignupScreen> {
                       icon: const Icon(Icons.arrow_back_ios_new_rounded),
                     ),
                     const SizedBox(height: 32),
-                    const Text('Create Elite\nAccount', 
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 36, letterSpacing: -1.5, height: 1.1)),
+                    const Text('Create Elite\nAccount',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 36,
+                            letterSpacing: -1.5,
+                            height: 1.1)),
                     const SizedBox(height: 12),
-                    const Text('Join the premium fashion community.', 
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                    const Text('Join the premium fashion community.',
+                        style: TextStyle(
+                            color: AppColors.textSecondary, fontSize: 16)),
                     const SizedBox(height: 48),
-                    
-                    _buildTextField(_usernameController, 'Username', Icons.person_outline_rounded),
+
+                    _buildTextField(_usernameController, 'Username',
+                        Icons.person_outline_rounded),
                     const SizedBox(height: 20),
-                    _buildTextField(_emailController, 'Email Address', Icons.email_outlined),
+                    _buildTextField(_emailController, 'Email Address',
+                        Icons.email_outlined),
                     const SizedBox(height: 20),
-                    
+
                     // Unified Phone Picker
                     IntlPhoneField(
                       decoration: InputDecoration(
                         labelText: 'Phone Number',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20)),
                       ),
                       initialCountryCode: 'AL',
                       onChanged: (phone) => _phoneNumber = phone.completeNumber,
                     ),
                     const SizedBox(height: 8),
 
-                    _buildTextField(_passwordController, 'Password', Icons.lock_outline_rounded, isPassword: true),
+                    _buildTextField(_passwordController, 'Password',
+                        Icons.lock_outline_rounded,
+                        isPassword: true),
                     const SizedBox(height: 40),
-                    
+
                     if (authProvider.isLoading)
                       const Center(child: CircularProgressIndicator())
                     else
                       ElevatedButton(
-                        onPressed: () async {
-                          if (_formKey.currentState!.validate()) {
-                            try {
-                              await authProvider.signup(
-                                _usernameController.text,
-                                _emailController.text,
-                                _passwordController.text,
-                                _phoneNumber,
-                              );
-                              if (mounted) _showSuccessDialog(context, _emailController.text);
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Signup Failed: $e'), backgroundColor: AppColors.error),
-                              );
-                            }
-                          }
-                        },
-                        child: const Text('CREATE ACCOUNT'),
+                        onPressed: authProvider.isSignupRateLimited
+                            ? null
+                            : () async {
+                                if (_formKey.currentState!.validate()) {
+                                  try {
+                                    await authProvider.signup(
+                                      _usernameController.text,
+                                      _emailController.text,
+                                      _passwordController.text,
+                                      _phoneNumber,
+                                    );
+                                    if (mounted)
+                                      _showSuccessDialog(
+                                          context, _emailController.text);
+                                  } catch (e) {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(authProvider.errorMessage ?? 'Signup failed. Please try again.'),
+                                          backgroundColor: AppColors.error,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                        child: Text(
+                          authProvider.isSignupRateLimited
+                              ? 'WAIT ${cooldownSeconds}s'
+                              : 'CREATE ACCOUNT',
+                        ),
                       ),
                   ],
                 ),
@@ -112,7 +136,9 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool isPassword = false}) {
+  Widget _buildTextField(
+      TextEditingController controller, String label, IconData icon,
+      {bool isPassword = false}) {
     return TextFormField(
       controller: controller,
       obscureText: isPassword,
@@ -132,22 +158,34 @@ class _SignupScreenState extends State<SignupScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         title: const Column(
           children: [
-            Icon(Icons.mark_email_read_rounded, color: AppColors.success, size: 64),
+            Icon(Icons.mark_email_read_rounded,
+                color: AppColors.success, size: 64),
             SizedBox(height: 16),
-            Text('REAL EMAIL SENT!', textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24, letterSpacing: -1)),
+            Text('REAL EMAIL SENT!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 24,
+                    letterSpacing: -1)),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('A production welcome email has been sent to:', textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary)),
+            Text('A production welcome email has been sent to:',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textSecondary)),
             const SizedBox(height: 8),
-            Text(email, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.accentColor)),
+            Text(email,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    color: AppColors.accentColor)),
             const SizedBox(height: 20),
-            const Text('Please check your actual inbox (and spam folder) to verify your account.', 
-              textAlign: TextAlign.center, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            const Text(
+                'Please check your actual inbox (and spam folder) to verify your account.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
           ],
         ),
         actions: [
@@ -156,7 +194,8 @@ class _SignupScreenState extends State<SignupScreen> {
               Navigator.pop(context); // Close dialog
               Navigator.pop(context); // Go back home
             },
-            child: const Text('LET\'S EXPLORE', style: TextStyle(fontWeight: FontWeight.w900)),
+            child: const Text('LET\'S EXPLORE',
+                style: TextStyle(fontWeight: FontWeight.w900)),
           ),
         ],
       ),

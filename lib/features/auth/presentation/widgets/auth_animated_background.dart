@@ -7,16 +7,18 @@ class AuthAnimatedBackground extends StatefulWidget {
   final String imageUrl;
 
   const AuthAnimatedBackground({
-    super.key, 
-    required this.child, 
-    this.imageUrl = 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2040',
+    super.key,
+    required this.child,
+    this.imageUrl =
+        'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2040',
   });
 
   @override
   State<AuthAnimatedBackground> createState() => _AuthAnimatedBackgroundState();
 }
 
-class _AuthAnimatedBackgroundState extends State<AuthAnimatedBackground> with SingleTickerProviderStateMixin {
+class _AuthAnimatedBackgroundState extends State<AuthAnimatedBackground>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   Offset _mousePosition = Offset.zero;
   final List<_Particle> _particles = List.generate(40, (index) => _Particle());
@@ -46,7 +48,7 @@ class _AuthAnimatedBackgroundState extends State<AuthAnimatedBackground> with Si
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final center = Offset(size.width / 2, size.height / 2);
-    
+
     // Parallax calculation
     final dx = (_mousePosition.dx - center.dx) / center.dx;
     final dy = (_mousePosition.dy - center.dy) / center.dy;
@@ -68,9 +70,20 @@ class _AuthAnimatedBackgroundState extends State<AuthAnimatedBackground> with Si
               fit: BoxFit.cover,
               color: Colors.black.withOpacity(0.25),
               colorBlendMode: BlendMode.darken,
+              errorBuilder: (_, __, ___) {
+                return Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF1A1A1E), Color(0xFF2C3142)],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-          
+
           // 2. Interactive Particles
           AnimatedBuilder(
             animation: _controller,
@@ -84,7 +97,7 @@ class _AuthAnimatedBackgroundState extends State<AuthAnimatedBackground> with Si
               );
             },
           ),
-          
+
           // 3. Subtle Vignette
           Positioned.fill(
             child: Container(
@@ -100,7 +113,7 @@ class _AuthAnimatedBackgroundState extends State<AuthAnimatedBackground> with Si
               ),
             ),
           ),
-          
+
           // 4. Content
           widget.child,
         ],
@@ -132,7 +145,7 @@ class _Particle {
   void update(double progress, Offset mouse, Size screenSize) {
     x += vx;
     y += vy;
-    
+
     // Subtle mouse attraction
     if (mouse != Offset.zero) {
       final mx = mouse.dx / screenSize.width;
@@ -157,7 +170,8 @@ class _ParticlePainter extends CustomPainter {
     final paint = Paint()..color = Colors.white;
     for (var p in particles) {
       paint.color = Colors.white.withOpacity(p.opacity);
-      canvas.drawCircle(Offset(p.x * size.width, p.y * size.height), p.size, paint);
+      canvas.drawCircle(
+          Offset(p.x * size.width, p.y * size.height), p.size, paint);
     }
   }
 

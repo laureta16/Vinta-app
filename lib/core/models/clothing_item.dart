@@ -30,8 +30,10 @@ class ClothingItem {
   final String? videoUrl;
   final String sellerId;
   final String sellerName;
+  final bool sellerVerified;
   final List<Comment> comments;
   bool isLiked;
+  bool isSaved;
 
   ClothingItem({
     required this.id,
@@ -47,8 +49,10 @@ class ClothingItem {
     this.videoUrl,
     required this.sellerId,
     required this.sellerName,
+    this.sellerVerified = false,
     this.comments = const [],
     this.isLiked = false,
+    this.isSaved = false,
   });
 
   ClothingItem copyWith({
@@ -65,8 +69,10 @@ class ClothingItem {
     String? videoUrl,
     String? sellerId,
     String? sellerName,
+    bool? sellerVerified,
     List<Comment>? comments,
     bool? isLiked,
+    bool? isSaved,
   }) {
     return ClothingItem(
       id: id ?? this.id,
@@ -82,8 +88,10 @@ class ClothingItem {
       videoUrl: videoUrl ?? this.videoUrl,
       sellerId: sellerId ?? this.sellerId,
       sellerName: sellerName ?? this.sellerName,
+      sellerVerified: sellerVerified ?? this.sellerVerified,
       comments: comments ?? List.from(this.comments),
       isLiked: isLiked ?? this.isLiked,
+      isSaved: isSaved ?? this.isSaved,
     );
   }
 }

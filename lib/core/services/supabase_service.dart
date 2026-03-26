@@ -4,16 +4,32 @@ class SupabaseService {
   // CONFIGURATION: These placeholders must be replaced with the user's specific project keys
   // to enable REAL-WORLD automated emails and database persistence.
   static const String supabaseUrl = 'https://tqlnlcgirhzcmtkpjktt.supabase.co';
-  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxbG5sY2dpcmh6Y210a3Bqa3R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxOTI2NTcsImV4cCI6MjA4OTc2ODY1N30.0DDt_XZZJu9Ci1saZ6HbWaAREM7FOmF9VyDnQcuM4s8';
+  static const String supabaseAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxbG5sY2dpcmh6Y210a3Bqa3R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxOTI2NTcsImV4cCI6MjA4OTc2ODY1N30.0DDt_XZZJu9Ci1saZ6HbWaAREM7FOmF9VyDnQcuM4s8';
+  static bool _isInitialized = false;
+
+  static bool get isInitialized => _isInitialized;
 
   static Future<void> initialize() async {
+    if (_isInitialized) {
+      return;
+    }
+
     await Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
     );
+
+    _isInitialized = true;
   }
 
-  static SupabaseClient get client => Supabase.instance.client;
+  static SupabaseClient get client {
+    if (!_isInitialized) {
+      throw StateError(
+          'Supabase is not initialized. Call SupabaseService.initialize() first.');
+    }
+    return Supabase.instance.client;
+  }
 
   // Real Automated Email Trigger (via Supabase Auth)
   static Future<AuthResponse> signUp({
